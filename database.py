@@ -3,9 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import create_database, database_exists
 
 
-DATABASE_URL: str = (
-    "postgresql://postgres:postgres@127.0.0.1:5432/auth"  # TODO get URI from env variable
-)
+DATABASE_URL: str = "postgresql://postgres:postgres@127.0.0.1:5432/auth"  # TODO get URI from env variable
 if not database_exists(DATABASE_URL):
     create_database(DATABASE_URL)
 

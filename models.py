@@ -45,11 +45,11 @@ class Token(Base):
     token: Mapped[str] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(ForeignKey("users.username"))
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now() # pylint: disable=E1102
+        DateTime(timezone=True), server_default=func.now()
     )
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        server_default=func.now() + timedelta(seconds=TOKEN_VALIDITY_DURATION_SEC), # pylint: disable=E1102
+        server_default=func.now() + timedelta(seconds=TOKEN_VALIDITY_DURATION_SEC),
     )
 
     def __init__(self, token: str, username: str) -> None:
