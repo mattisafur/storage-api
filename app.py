@@ -4,6 +4,14 @@ from flask import Flask, request
 from flask_restful import Api, Resource
 from email_validator import EmailNotValidError, validate_email
 
+from data_utils import (
+    get_token,
+    get_user,
+    get_user_data,
+    get_user_tokens,
+    token_exists,
+    user_exists,
+)
 from models import Base, Token, User, UserData
 from database import Session, engine
 
@@ -168,46 +176,6 @@ class Data(Resource):
             session.commit()
 
         return {"message": "User data updated successfully"}, 200
-
-
-def user_exists(username: str) -> bool:
-    """Check if user exists in the database"""
-    with Session() as session:
-        user = session.query(User).filter(User.username == username).one_or_none()
-        return user is not None
-
-
-def get_user(username: str) -> User:
-    """Get user from the database"""
-    with Session() as session:
-        return session.query(User).filter(User.username == username).one()
-
-
-def token_exists(token: str) -> bool:
-    """Check if token exists in the database"""
-    with Session() as session:
-        token_obj = session.query(Token).filter(Token.token == token).one_or_none()
-        return token_obj is not None
-
-
-def get_token(token: str) -> Token:
-    """Get token from the database"""
-    with Session() as session:
-        return session.query(Token).filter(Token.token == token).one()
-
-
-def get_user_tokens(username: str) -> list[Token]:
-    """Get all user tokens from the database"""
-    with Session() as session:
-        return session.query(Token).filter(Token.username == username).all()
-
-
-def get_user_data(username: str) -> UserData | None:
-    """Get user data from the database, returns None if not found."""
-    with Session() as session:
-        return (
-            session.query(UserData).filter(UserData.username == username).one_or_none()
-        )
 
 
 def hash_password(passsword: str) -> bytes:
