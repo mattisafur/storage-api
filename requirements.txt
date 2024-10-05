@@ -1,0 +1,7 @@
+Flask==3.0.3
+Flask-RESTful==0.3.10
+psycopg2==2.9.9
+SQLAlchemy==2.0.35
+SQLAlchemy-Utils==0.41.2
+bcrypt==4.2.0
+email_validator==2.2.0
