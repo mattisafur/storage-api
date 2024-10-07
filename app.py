@@ -30,19 +30,19 @@ class Register(Resource):
         email: str = request_data["email"]
         password: str = request_data["password"]
 
-        if user_exists(username):
-            return {"message": "User already exists"}, 409
-
-        try:
-            validate_email(email)
-        except EmailNotValidError:
-            return {"message": "Invalid email"}, 400
-
-        password_hash: bytes = hash_password(password)
-
-        user = User(username, email, password_hash)
-
         with Session() as session:
+            if user_exists(session, username):
+                return {"message": "User already exists"}, 409
+
+            try:
+                validate_email(email)
+            except EmailNotValidError:
+                return {"message": "Invalid email"}, 400
+
+            password_hash: bytes = hash_password(password)
+
+            user = User(username, email, password_hash)
+
             session.add(user)
             session.commit()
 
@@ -58,17 +58,17 @@ class Login(Resource):
         username: str = request_data["username"]
         password: str = request_data["password"]
 
-        if not user_exists(username):
-            return {"message": "User not found"}, 404
-
-        user = get_user(username)
-
-        if not check_password(password, user.password_hash):
-            return {"message": "Invalid password"}, 401
-
-        token = Token(token_urlsafe(Token.TOKEN_LENGTH), user.username)
-
         with Session() as session:
+            if not user_exists(session, username):
+                return {"message": "User not found"}, 404
+
+            user = get_user(session, username)
+
+            if not check_password(password, user.password_hash):
+                return {"message": "Invalid password"}, 401
+
+            token = Token(token_urlsafe(Token.TOKEN_LENGTH), user.username)
+
             session.add(token)
             session.commit()
 
@@ -86,11 +86,11 @@ class LogOut(Resource):
 
         token: str = request_data["token"]
 
-        if not token_exists(token):
-            return {"message": "Token not found"}, 404
-
-        token_obj = get_token(token)
         with Session() as session:
+            if not token_exists(session, token):
+                return {"message": "Token not found"}, 404
+
+            token_obj = get_token(session, token)
             session.delete(token_obj)
             session.commit()
 
@@ -106,22 +106,22 @@ class Delete(Resource):
         username: str = request_data["username"]
         password: str = request_data["password"]
 
-        if not user_exists(username):
-            return {"message": "User not found"}, 404
-
-        user = get_user(username)
-
-        if not check_password(password, user.password_hash):
-            return {"message": "Invalid password"}, 401
-
         with Session() as session:
+            if not user_exists(session, username):
+                return {"message": "User not found"}, 404
+
+            user = get_user(session, username)
+
+            if not check_password(password, user.password_hash):
+                return {"message": "Invalid password"}, 401
+
             # delete all user tokens
-            for token in get_user_tokens(username):
+            for token in get_user_tokens(session, username):
                 session.delete(token)
             session.commit()
 
             # delete user data
-            user_data = get_user_data(user.username)
+            user_data = get_user_data(session, user.username)
             if user_data is not None:
                 session.delete(user_data)
                 session.commit()
@@ -141,12 +141,14 @@ class Data(Resource):
 
         token: str = request_data["token"]
 
-        if not token_exists(token):
-            return {"message": "Token not found"}, 404
+        with Session() as session:
+            if not token_exists(session, token):
+                return {"message": "Token not found"}, 404
 
-        token_obj = get_token(token)
+            token_obj = get_token(session, token)
 
-        data = get_user_data(token_obj.username)
+            data = get_user_data(session, token_obj.username)
+
         if data is None:
             return {"message": "No user data"}, 404
 
@@ -160,14 +162,14 @@ class Data(Resource):
         token: str = request_data["token"]
         data: str = request_data["data"]
 
-        if not token_exists(token):
-            return {"message": "Token not found"}, 404
-
-        token_obj = get_token(token)
-
-        data_obj = get_user_data(token_obj.username)
-
         with Session() as session:
+            if not token_exists(session, token):
+                return {"message": "Token not found"}, 404
+
+            token_obj = get_token(session, token)
+
+            data_obj = get_user_data(session, token_obj.username)
+
             if data_obj is None:
                 data_obj = UserData(token_obj.username, data)
             else:
